@@ -1,12 +1,13 @@
+import random
 import pathlib
 import requests
 
 
-def get_comics_file_name(url):
-    """Determine comics file name from URL"""
+def get_file_name(url):
+    """Determine file name from URL"""
     url_parts = url.split('/')
-    comics_file_name = url_parts[-1]
-    return comics_file_name
+    file_name = url_parts[-1]
+    return file_name
 
 
 def download_comics_picture(url, folder=None, params={}):
@@ -14,81 +15,101 @@ def download_comics_picture(url, folder=None, params={}):
     response = requests.get(url, params=params)
     response.raise_for_status()
 
-    comics_file_name = get_comics_file_name(url)
+    comics_file_name = get_file_name(url)
     if not folder:
         folder = '.'
     else:
         pathlib.Path(folder).mkdir(parents=True, exist_ok=True)
-    full_path = f'{folder}/{comics_file_name}'
-    with open(full_path, 'wb') as file:
+    comics_full_path = f'{folder}/{comics_file_name}'
+    with open(comics_full_path, 'wb') as file:
         file.write(response.content)
-    return full_path
+    return comics_full_path
 
 
-def get_random_comics(comics_number):
-    """Extract random comics parameters: URL, text description"""
-    comics_url = f'https://xkcd.com/{comics_number}/info.0.json'
-    response = requests.get(comics_url)
+def get_total_comics_number():
+    """Determine total comics number on the xkcd.com"""
+    api_url = 'https://xkcd.com/info.0.json'
+    response = requests.get(api_url)
+    response.raise_for_status()
+    return response.json()['num']
+
+
+def get_random_comics():
+    """Get random comics as extracted parameters: image URL, description"""
+    total_comics_num = get_total_comics_number()
+    random_comics = random.randrange(1, total_comics_num)
+    api_url = f'https://xkcd.com/{random_comics}/info.0.json'
+    response = requests.get(api_url)
     response.raise_for_status()
 
     comics_json = response.json()
     img_url = comics_json['img']
-    img_desc = comics_json['alt']
-    return (img_url, img_desc,)
+    text_desc = comics_json['alt']
+    return (img_url, text_desc,)
 
 
-def get_upload_server(vk_access_token, comics_group_id):
-    """Get VK server URL to upload comics picture file"""
+def get_upload_server(access_token, group_id):
+    """Get VK server URL to upload comics picture"""
     params = {
-            'access_token': vk_access_token,
-            'group_id': comics_group_id,
+            'access_token': access_token,
+            'group_id': group_id,
             'v': '5.131',
     }
-    response = requests.get('https://api.vk.com/method/photos.getWallUploadServer/', params=params)
+    api_url = 'https://api.vk.com/method/photos.getWallUploadServer/'
+    response = requests.get(api_url, params=params)
     response.raise_for_status()
 
     json = response.json()['response']
     return json['upload_url']
 
 
-def upload_comics(server_url, vk_access_token, comics_group_id, comics_picture_pathname, comics_descr):
-    """Upload comics picture to vk.com server"""
-    with open(comics_picture_pathname, 'rb') as file:
+def upload_comics_photo(server_url, comics_photo):
+    """Upload comics photo to server"""
+    with open(comics_photo, 'rb') as file:
         files = {
             'photo': file,
         }
         response = requests.post(server_url, files=files)
         response.raise_for_status()
+    return response.json()
 
-        json = response.json()
-        server = json['server']
-        photo = json['photo']
-        hash = json['hash']
 
-        params = {
+def save_photo_group_album(access_token, group_id, photo_json):
+    """Save photo to a group album"""
+    server = photo_json['server']
+    photo = photo_json['photo']
+    hash = photo_json['hash']
+
+    params = {
             'server': server,
             'photo': photo,
             'hash': hash,
-            'access_token': vk_access_token,
-            'group_id': comics_group_id,
+            'access_token': access_token,
+            'group_id': group_id,
             'v': '5.131',
         }
-        response = requests.post('https://api.vk.com/method/photos.saveWallPhoto/', data=params)
-        response.raise_for_status()
-        resp = response.json()
+    api_url = 'https://api.vk.com/method/photos.saveWallPhoto/'
+    response = requests.post(api_url, data=params)
+    response.raise_for_status()
+    return response.json()
 
-        owner_id = resp['response'][0]['owner_id']
-        media_id = resp['response'][0]['id']
-        attachments = f'photo{owner_id}_{media_id}'
 
-        params = {
-            'message': comics_descr,
-            'owner_id': f'-{comics_group_id}',
-            'attachments': attachments,
-            'from_group': 1,
-            'access_token': vk_access_token,
-            'v': '5.131',
-        }
-        response = requests.post('https://api.vk.com/method/wall.post/', data=params)
-        response.raise_for_status()
-        print('\n********')
+def publish_comics(access_token, group_id, album_json, comics_desc):
+    """Publish comics picture to group page on vk.com"""
+    owner_id = album_json['response'][0]['owner_id']
+    photo_id = album_json['response'][0]['id']
+    attachments = f'photo{owner_id}_{photo_id}'
+
+    params = {
+        'message': comics_desc,
+        'owner_id': f'-{group_id}',
+        'attachments': attachments,
+        'from_group': 1,
+        'access_token': access_token,
+        'v': '5.131',
+    }
+    api_url = 'https://api.vk.com/method/wall.post/'
+    response = requests.post(api_url, data=params)
+    response.raise_for_status()
+    json = response.json()
+    return json['response']['post_id']

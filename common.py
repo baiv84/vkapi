@@ -49,7 +49,7 @@ def get_random_comics():
 
 
 def get_upload_server(access_token, group_id):
-    """Get VK server URL to upload comics picture"""
+    """Get VK server URL to upload comics"""
     params = {
             'access_token': access_token,
             'group_id': group_id,
@@ -95,7 +95,7 @@ def save_photo_group_album(access_token, group_id, photo_json):
 
 
 def publish_comics(access_token, group_id, album_json, comics_desc):
-    """Publish comics picture to group page on vk.com"""
+    """Publish comics to group page on vk.com"""
     owner_id = album_json['response'][0]['owner_id']
     photo_id = album_json['response'][0]['id']
     attachments = f'photo{owner_id}_{photo_id}'

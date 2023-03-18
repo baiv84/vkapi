@@ -1,8 +1,8 @@
 # Description
 
-`vkapi` is a console tool to publish comics (picture + funny story) to the particular [vk.com](https://vk.com) public group page. 
+`vkapi` is a console tool to publish comic (picture + funny story) to the particular [vk.com](https://vk.com) public group page. 
 
-The comics content is downloaded from the [https://xkcd.com](https://xkcd.com/) resources.
+The comic content is downloaded from the [https://xkcd.com](https://xkcd.com/) resources.
 
 # Project Goals
 
@@ -61,7 +61,7 @@ This command installs all necessary libraries (`requests`, `environs`) into the 
 To work with [Vkontakte API](https://dev.vk.com/reference/) we need to create new file with name: `.env` and add there 2 lines:
 
 ```
-VK_COMICS_GROUP_ID=xxxx
+VK_COMIC_GROUP_ID=xxxx
 ```
 
 where `xxxx` - please, replace with your personal public group ID value.
@@ -92,9 +92,9 @@ If program runs successfully, you will see the results like these:
 
 ![Alt text](img/1.png?raw=true "vkapi")
 
-In browser open your group page, then you will see the new comics picture on the page:
+In browser open your group page, then you will see the new comic picture on the page:
 
-![Alt text](img/2.png?raw=true "comics picture")
+![Alt text](img/2.png?raw=true "comic picture")
 
 # Final steps
 

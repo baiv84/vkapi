@@ -1,5 +1,6 @@
 import requests
 import tempfile
+import traceback
 from environs import Env
 from common import publish_to_wall
 from common import get_random_comic
@@ -7,6 +8,7 @@ from common import upload_to_server
 from common import get_upload_server
 from common import download_comic_file
 from common import save_photo_to_album
+from vkexception import VKException
 
 
 def main():
@@ -29,8 +31,13 @@ def main():
     except requests.exceptions.HTTPError:
         print('\nHTTP requests error occurred!')
         raise SystemExit(1)
+    except VKException as e:
+        print(f"""\nException point - '{e.exception_point}' function, """
+              f"""error text - '{e.error_msg}', """
+              f"""error code - '{e.error_code}'\n""")
+        raise SystemExit(1)
     except KeyError:
-        print('\nOoops, check your API token value in .env file!')
+        print(traceback.format_exc())
         raise SystemExit(1)
     finally:
         folder.cleanup()

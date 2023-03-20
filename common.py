@@ -3,6 +3,15 @@ import random
 import requests
 from urllib.parse import unquote
 from urllib.parse import urlsplit
+from vkexception import VKException
+
+
+def check_vk_api_response(response):
+    """Check VK API response for errors"""
+    error = response.get('error')
+    if error:
+        return False, error['error_code'], error['error_msg']
+    return True, 0, ''
 
 
 def get_file_name(url):
@@ -58,7 +67,13 @@ def get_upload_server(access_token, group_id):
     api_url = 'https://api.vk.com/method/photos.getWallUploadServer/'
     response = requests.get(api_url, params=params)
     response.raise_for_status()
-    upload_server_url = response.json()['response']['upload_url']
+
+    upload_server_resp = response.json()
+    status, error_code, error_msg = check_vk_api_response(upload_server_resp)
+    if not status:
+        raise VKException(error_code, error_msg, 'get_upload_server')
+
+    upload_server_url = upload_server_resp['response']['upload_url']
     return upload_server_url
 
 
@@ -70,7 +85,12 @@ def upload_to_server(server_url, comic_photo):
         }
         response = requests.post(server_url, files=files)
     response.raise_for_status()
+
     upload_server_resp = response.json()
+    status, error_code, error_msg = check_vk_api_response(upload_server_resp)
+    if not status:
+        raise VKException(error_code, error_msg, 'upload_to_server')
+
     server_id = upload_server_resp['server']
     photo = upload_server_resp['photo']
     photo_hash = upload_server_resp['hash']
@@ -92,9 +112,14 @@ def save_photo_to_album(access_token, group_id, server_id,
     response = requests.post(api_url, data=params)
     response.raise_for_status()
 
-    saved_photo_resp = response.json()['response'][0]
-    owner_id = saved_photo_resp['owner_id']
-    photo_id = saved_photo_resp['id']
+    saved_photo_resp = response.json()
+    status, error_code, error_msg = check_vk_api_response(saved_photo_resp)
+    if not status:
+        raise VKException(error_code, error_msg, 'save_photo_to_album')
+
+    saved_photo = saved_photo_resp['response'][0]
+    owner_id = saved_photo['owner_id']
+    photo_id = saved_photo['id']
     return owner_id, photo_id
 
 
@@ -111,5 +136,11 @@ def publish_to_wall(access_token, group_id, owner_id, photo_id, comic_desc):
     api_url = 'https://api.vk.com/method/wall.post/'
     response = requests.post(api_url, data=params)
     response.raise_for_status()
-    published_post_id = response.json()['response']['post_id']
+
+    published_post_resp = response.json()
+    status, error_code, error_msg = check_vk_api_response(published_post_resp)
+    if not status:
+        raise VKException(error_code, error_msg, 'publish_to_wall')
+
+    published_post_id = published_post_resp['response']['post_id']
     return published_post_id

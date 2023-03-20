@@ -26,25 +26,25 @@ def download_comic_file(url, folder, params={}):
 
 
 def get_total_comic_number():
-    """Determine total comic number on the xkcd.com"""
+    """Get total comic number from the xkcd.com"""
     api_url = 'https://xkcd.com/info.0.json'
     response = requests.get(api_url)
     response.raise_for_status()
-    resp_object = response.json()
-    return resp_object['num']
+    total_comic_number = response.json()['num']
+    return total_comic_number
 
 
 def get_random_comic():
     """Get random comic as extracted parameters: image URL, description"""
     total_comic_number = get_total_comic_number()
-    random_comic = random.randrange(1, total_comic_number)
-    api_url = f'https://xkcd.com/{random_comic}/info.0.json'
+    random_comic_num = random.randrange(1, total_comic_number)
+    api_url = f'https://xkcd.com/{random_comic_num}/info.0.json'
     response = requests.get(api_url)
     response.raise_for_status()
 
-    resp_object = response.json()
-    comic_img_url = resp_object['img']
-    comic_text_desc = resp_object['alt']
+    random_comic_resp = response.json()
+    comic_img_url = random_comic_resp['img']
+    comic_text_desc = random_comic_resp['alt']
     return comic_img_url, comic_text_desc
 
 
@@ -58,8 +58,8 @@ def get_upload_server(access_token, group_id):
     api_url = 'https://api.vk.com/method/photos.getWallUploadServer/'
     response = requests.get(api_url, params=params)
     response.raise_for_status()
-    resp_object = response.json()['response']
-    return resp_object['upload_url']
+    upload_server_url = response.json()['response']['upload_url']
+    return upload_server_url
 
 
 def upload_to_server(server_url, comic_photo):
@@ -70,10 +70,10 @@ def upload_to_server(server_url, comic_photo):
         }
         response = requests.post(server_url, files=files)
     response.raise_for_status()
-    resp_object = response.json()
-    server_id = resp_object['server']
-    photo = resp_object['photo']
-    photo_hash = resp_object['hash']
+    upload_server_resp = response.json()
+    server_id = upload_server_resp['server']
+    photo = upload_server_resp['photo']
+    photo_hash = upload_server_resp['hash']
     return server_id, photo, photo_hash
 
 
@@ -92,9 +92,9 @@ def save_photo_to_album(access_token, group_id, server_id,
     response = requests.post(api_url, data=params)
     response.raise_for_status()
 
-    resp_object = response.json()
-    owner_id = resp_object['response'][0]['owner_id']
-    photo_id = resp_object['response'][0]['id']
+    saved_photo_resp = response.json()['response'][0]
+    owner_id = saved_photo_resp['owner_id']
+    photo_id = saved_photo_resp['id']
     return owner_id, photo_id
 
 
@@ -111,5 +111,5 @@ def publish_to_wall(access_token, group_id, owner_id, photo_id, comic_desc):
     api_url = 'https://api.vk.com/method/wall.post/'
     response = requests.post(api_url, data=params)
     response.raise_for_status()
-    resp_object = response.json()['response']
-    return resp_object['post_id']
+    published_post_id = response.json()['response']['post_id']
+    return published_post_id

@@ -45,7 +45,7 @@ def get_random_comic():
     resp_object = response.json()
     comic_img_url = resp_object['img']
     comic_text_desc = resp_object['alt']
-    return (comic_img_url, comic_text_desc, )
+    return comic_img_url, comic_text_desc
 
 
 def get_upload_server(access_token, group_id):
@@ -74,7 +74,7 @@ def upload_to_server(server_url, comic_photo):
     server_id = resp_object['server']
     photo = resp_object['photo']
     photo_hash = resp_object['hash']
-    return (server_id, photo, photo_hash, )
+    return server_id, photo, photo_hash
 
 
 def save_photo_to_album(access_token, group_id, server_id,
@@ -95,7 +95,7 @@ def save_photo_to_album(access_token, group_id, server_id,
     resp_object = response.json()
     owner_id = resp_object['response'][0]['owner_id']
     photo_id = resp_object['response'][0]['id']
-    return (owner_id, photo_id, )
+    return owner_id, photo_id
 
 
 def publish_to_wall(access_token, group_id, owner_id, photo_id, comic_desc):
